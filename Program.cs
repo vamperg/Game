@@ -133,26 +133,18 @@ namespace Game
             EnemyHp = Rand(EnemyHpArray[EnemyLvl] / 2, EnemyHpArray[EnemyLvl] + EnemyHpArray[EnemyLvl] / 2);
             EnemyAtt = Rand(EnemyAttArray[EnemyLvl] / 2, EnemyAttArray[EnemyLvl] + EnemyAttArray[EnemyLvl] / 2);   
         }
-
-        static void WinMesg()
+        static void Test()
         {
-            code = 0; pun = 1; kur[0] = '>';
-            do
+            
+            ShowStats();
+            while (true)
             {
-                Clear();
-                ShowStats();
-                Console.WriteLine("Победа! Желаете продолжить искать врагов или же хотите вернуться домой?\n{0}В бой!\n{1}Вернуться", kur[0], kur[1]);
-                code = Kur(2);
-            } while (code == 0);
-            if (code == 1)
-            {
-                Battle();
-            }
-            else
-            {
-                Menu();
+                SearchEnemy();
+                ShowStatsEnemy();
+                Console.ReadKey();
             }
         }
+
         static void Battle()
         {
             SearchEnemy();
@@ -173,8 +165,9 @@ namespace Game
                         } while (code == 0);
                         if (code == 1)
                         {
-                            EnemyHp -= PlayerAtt;
-                            PlayerHp -= Convert.ToInt32(EnemyAtt / PlayerDeff);
+                            EnemyHp -= Rand(PlayerAtt/2, PlayerAtt+PlayerAtt/2);
+                            int EnemyAttack = Convert.ToInt32(EnemyAtt / PlayerDeff);
+                            PlayerHp -= Rand(EnemyAttack / 2, EnemyAttack + EnemyAttack / 2);
                         }
                         else
                         {
@@ -192,6 +185,26 @@ namespace Game
                 }
             }
         }
+
+        static void WinMesg()
+        {
+            code = 0; pun = 1; kur[0] = '>';
+            do
+            {
+                Clear();
+                ShowStats();
+                Console.WriteLine("Победа! Желаете продолжить искать врагов или же хотите вернуться домой?\n{0}В бой!\n{1}Вернуться", kur[0], kur[1]);
+                code = Kur(2);
+            } while (code == 0);
+            if (code == 1)
+            {
+                Battle();
+            }
+            else
+            {
+                Menu();
+            }
+        }
         static void NewGame()
         {
             Console.Write("Добро пожаловать в игру.\nВведите свой ник:");
@@ -203,7 +216,7 @@ namespace Game
             
         }
         static void Main(string[] args)
-        {
+        { 
             NewGame();
             ShowStats();
             Menu();
