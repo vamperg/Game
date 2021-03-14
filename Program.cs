@@ -16,12 +16,13 @@ namespace Game
         static string PathToSave = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\Legend of Hero";
         static string[] SaveInt = new string[255];
         static double GlobalTime = 0;
+        static int Fight = 0;
         static int Report = 0;
         //Player
         public static string nickname;
         static bool ShopUpdate = true;
         static int[,] ShopItem = new int[5, 5];
-        static int TimeShop = 20000;
+        static int TimeShop = 30000;
         static int PlayerMaxHp;
         static int PlayerHp;
         static int PlayerLvl;
@@ -44,8 +45,8 @@ namespace Game
         static int EnemyLvl;
         static int EnemyAtt;
         static int[] EnemyPlaceLvl = { 2, 4, 7, 10 };
-        static int[] EnemyAttArray = { 10, 15, 20, 30, 40, 55, 70, 90, 125, 150 };
-        static int[] EnemyHpArray = { 50, 100, 200, 250, 300, 400, 500, 800, 1000, 1500};
+        static int[] EnemyAttArray = { 5, 10, 60, 90, 140, 255, 570, 990, 2125, 5150 };
+        static int[] EnemyHpArray = { 20, 50, 400, 750, 2000, 7400, 14500, 35800, 57000, 99500};
         static int Place;
         static Random rnd = new Random();
 
@@ -202,25 +203,25 @@ namespace Game
             EnemyName = EnemyNameArray[Rand(0, EnemyNameArray.Length)];
             EnemyLvl = Rand(EnemyPlaceLvl[Place] / 2, EnemyPlaceLvl[Place] + 1);
             int LvlId = EnemyLvl - 1;
-            EnemyHp = Rand(EnemyHpArray[LvlId] / 2, EnemyHpArray[LvlId] + EnemyHpArray[LvlId] / 2);
-            EnemyAtt = Rand(EnemyAttArray[LvlId] / 2, EnemyAttArray[LvlId] + EnemyAttArray[LvlId] / 2);
+            EnemyHp = Rand(EnemyHpArray[LvlId] / 2, EnemyHpArray[LvlId] + EnemyHpArray[LvlId] / 2) + Rand(PlayerHp/4, PlayerHp/2) + Rand(PlayerAtt/4, PlayerAtt);
+            EnemyAtt = Rand(EnemyAttArray[LvlId] / 2, EnemyAttArray[LvlId] + EnemyAttArray[LvlId] / 2) + Rand(PlayerAtt / 4, PlayerAtt / 2);
         }
 
         static int DropMoney()
         {
-            int money = Rand(Convert.ToInt32((EnemyLvl * 2 + EnemyHp + EnemyAtt*1.5) * 0.05), Convert.ToInt32((EnemyLvl *  2 + EnemyHp + EnemyAtt*1.5) * 0.2));
+            int money = Rand(Convert.ToInt32((EnemyLvl * 2 + EnemyHp + EnemyAtt*1.5) * 0.08), Convert.ToInt32((EnemyLvl *  2 + EnemyHp + EnemyAtt*1.5) * 0.2));
             return money;
         }
 
         static void WinMesg(int drop)
         {
             Clear();
-            if (Report < drop)
+            if (Report < drop && PlayerLvl > 1)
             {
                 drop -= Report;
                 Report = 0;
             }
-            
+
 
             Money += drop;
             KillMob += 1;
@@ -316,11 +317,11 @@ namespace Game
                 //Бафф
                 if (shop[0, i] == 1)
                 {
-                    shop[2, i] = 1 + Rand(PlayerLvl / 2, PlayerLvl * 3) + Rand(0, KillMob + 1) + Rand(0, Place * 5 + 1) + WeaponStatus / 2;
+                    shop[2, i] = 1 + Rand(PlayerLvl / 20, PlayerLvl / 15) + Rand(0, KillMob/4+1) + Rand(0, Place * 3 + 1) + WeaponStatus / 4;
                 }
                 else
                 {
-                    shop[2, i] = 3 + Rand(PlayerLvl / 2, PlayerLvl * 3) + Rand(KillMob, KillMob * 2) + Rand(0, Place * 5 + 1);
+                    shop[2, i] = 3 + Rand(PlayerLvl / 2, PlayerLvl) + Rand(KillMob/4, KillMob * 2) + Rand(0, Place * 2 + 1);
                 }
                 ///Качество
                 int rarity = Rand(0, 100);
@@ -342,7 +343,7 @@ namespace Game
                 }
                 ///Цена
                 
-                shop[4, i] = Rand(PlayerLvl, PlayerLvl * 5) + Rand(shop[2, i]*2, shop[2, i] * 8) + Rand(rarity / 2, rarity - rarity / 2) + WeaponStatus;
+                shop[4, i] = Rand(PlayerLvl, PlayerLvl * 5) + Rand(shop[2, i]*4, shop[2, i] * 8) + Rand(rarity / 2, rarity - rarity / 2) + WeaponStatus;
 
             }
             return shop;
@@ -412,6 +413,7 @@ namespace Game
 
         static void Shop()
         {
+            Save();
             Clear();
             InvBaff();
             if (ShopUpdate)
@@ -591,12 +593,13 @@ namespace Game
         static void Lazary()//Будет дорабатываться
         {
             PlayerHp = PlayerMaxHp;
-            if (Money > 30)
+            if (Money > 30 && PlayerLvl > 1)
             Money -= Rand(5, 30);
             Guild();
         }
         static void Guild()
         {
+            Save();
             code = 0; pun = 1; kur[0] = '>';
             do
             {
@@ -655,7 +658,7 @@ namespace Game
                 ShowStats();
                 Console.WriteLine("{0}Гильдия\n{1}Торговец\n{2}Выход", kur[0],kur[1] ,kur[2]);
                 ShowInv();
-                code = Kur(4);
+                code = Kur(3);
             } while (code == 0);
             if (code == 1)
             {
@@ -694,27 +697,35 @@ namespace Game
                         } while (code == 0);
                         if (code == 1)
                         {
-                            EnemyHp -= Rand(PlayerAtt/2, PlayerAtt+PlayerAtt/2);
+                            Fight = 1;
+                            EnemyHp -= Rand(PlayerAtt / 2, PlayerAtt + PlayerAtt / 2);
                             int EnemyAttack = Convert.ToInt32(EnemyAtt / PlayerDeff);
                             PlayerHp -= Rand(EnemyAttack / 2, EnemyAttack + EnemyAttack / 2);
                         }
                         else
                         {
                             Clear();
-                            Report = Rand(1, Convert.ToInt32((EnemyLvl * 1.2 + EnemyHp + EnemyAtt * 1.5) * 0.1));
-                            Console.Write("За побег начисляется штраф и при следующей награде гильдия их будет взыскать!\nТвой общий штраф:{0}\n>Вернуться домой", Report);
-                            Console.ReadKey();
-                            Menu();
+                            if (Fight == 1)
+                            {
+                                Report = Rand(1, Convert.ToInt32((EnemyLvl * 1.2 + EnemyHp + EnemyAtt * 1.5) * 0.06));
+                                Console.Write("За побег начисляется штраф и при следующей награде гильдия их будет взыскать!\nТвой общий штраф:{0}\n>Вернуться домой", Report);
+                                Console.ReadKey();
+                                Fight = 0;
+                                Guild();
+                            }
+                            Guild();
 
                         }
                     }
                     else
                     {
+                        Fight = 0;
                         WinMesg(drop);
                     }
                 }
                 else
                 {
+                    Fight = 0;
                     Death();
                 }
             }
@@ -843,7 +854,7 @@ namespace Game
         {
             TimeShop -= 100;
             if(TimeShop <= 0){
-                TimeShop = 20000;
+                TimeShop = 30000;
                 ShopUpdate = true;
             }
             GlobalTime += 100;
