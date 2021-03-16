@@ -18,6 +18,8 @@ namespace Game
         static double GlobalTime = 0;
         static int Fight = 0;
         static int Report = 0;
+        static int BattlePow = 0;
+        static int RecordBattlePow = 0;
         //Player
         public static string nickname;
         static bool ShopUpdate = true;
@@ -72,13 +74,13 @@ namespace Game
                     kur[0] = ' ';
                     pun = maxi;
                     
-                    kur[maxi - 1] = '>';
+                    kur[maxi - 1] = '#';
                     return 0;
                 }
                 else
                 {
                     kur[pun - 1] = ' ';
-                    kur[pun - 2] = '>';
+                    kur[pun - 2] = '#';
                     pun--;
                     return 0;
                 }
@@ -89,13 +91,13 @@ namespace Game
                 {
                     kur[maxi - 1] = ' ';
                     pun = 1;
-                    kur[0] = '>';
+                    kur[0] = '#';
                     return 0;
                 }
                 else
                 {
                     kur[pun - 1] = ' ';
-                    kur[pun] = '>';
+                    kur[pun] = '#';
                     pun++;
                     return 0;
                 }
@@ -107,6 +109,7 @@ namespace Game
         static void ResetColor()
         {
             Console.ForegroundColor = ConsoleColor.White;
+            Console.BackgroundColor = ConsoleColor.Black;
         }
         static void SetColor(string color)
         {
@@ -155,6 +158,16 @@ namespace Game
         static void SetCursor(int x, int y)
         {
             Console.SetCursorPosition(x,y);
+        }
+
+        static void Help()
+        {
+            Clear();
+            SetCursor(Console.WindowWidth / 3+10, Console.CursorTop);
+            Console.WriteLine("П О М О Щ Ь");
+            Console.WriteLine("УПРАВЛЕНИЕ\nA|D или W|S и Enter чтобы подтвердить");
+            Console.WriteLine();
+            Console.ReadKey();
         }
 
         static void Death()
@@ -210,12 +223,17 @@ namespace Game
         static int DropMoney()
         {
             int money = Rand(Convert.ToInt32((EnemyLvl * 2 + EnemyHp + EnemyAtt*1.5) * 0.08), Convert.ToInt32((EnemyLvl *  2 + EnemyHp + EnemyAtt*1.5) * 0.2));
+            if (BattlePow > 0)
+            {
+                money += Rand(Convert.ToInt32((EnemyLvl * 2 + EnemyHp + EnemyAtt) * 0.1), Convert.ToInt32((EnemyLvl * 2 + EnemyHp + EnemyAtt) * 0.14) * BattlePow);
+            }
             return money;
         }
 
         static void WinMesg(int drop)
         {
             Clear();
+            
             if (Report < drop && PlayerLvl > 1)
             {
                 drop -= Report;
@@ -238,18 +256,21 @@ namespace Game
             } while (code == 0);
             if (code == 1)
             {
+                BattlePow++;
                 Battle();
+                
             }
             else
             {
                 Guild();
+                BattlePow = 0;
             }
         }
         static void ShowStats()
         {
             Clear();
             SetColor("Cyan");
-            Console.WriteLine("{0}|Здоровье:{1}|Сила:{2}|Защита:{3}|Уровень:{4}[{5}]|Деньги:{6}|Убито монстров:{7}|Прошло времени:{8}Сек.", nickname, PlayerHp, PlayerAtt, PlayerDeff, PlayerLvl, PlayerXp, Money, KillMob,GlobalTime/1000);
+            Console.WriteLine("{0}|Здоровье:{1}|Сила:{2}|Защита:{3}|Уровень:{4}[{5}]|Деньги:{6}|Убито монстров:{7}|Прошло времени:{8}Сек.Bat{9}\n", nickname, PlayerHp, PlayerAtt, PlayerDeff, PlayerLvl, PlayerXp, Money, KillMob,GlobalTime/1000, BattlePow);
             ResetColor();
         }
         static string[] SetItem(int id)
@@ -600,7 +621,7 @@ namespace Game
         static void Guild()
         {
             Save();
-            code = 0; pun = 1; kur[0] = '>';
+            code = 0; pun = 1; kur[0] = '#';
             do
             {
                 Clear();
@@ -612,12 +633,12 @@ namespace Game
                 Console.WriteLine("ТУТ ТЫ НАЙДЕШЬ ВСЕ, ЧТОБЫ СТАТЬ ИЗВЕСТНЫМ И БОГАТЫМ!");
                 ResetColor();
                 SetColor("Red");
-                Console.WriteLine("\n\tТВОЙ РАНГ В ГИЛЬДИИ:{0}\t\t\tШТРАФЫ:{1}\t\t\tУБИТО МОНСТРОВ:{2}", GRankTitle[GuildRank], Report, KillMob);
+                Console.WriteLine("\n\tТВОЙ РАНГ В ГИЛЬДИИ:{0}\t\tШТРАФЫ:{1}\t\tУБИТО МОНСТРОВ:{2}\tРЕКОРД УБИТЫХ:{3}", GRankTitle[GuildRank], Report, KillMob, RecordBattlePow);
                 SetColor("Cyan");
                 SetCursor(Console.WindowWidth / 4, Console.CursorTop + 1);
                 Console.WriteLine("[{0}]\tЗдоровье:{1}\tСила:{2}\tЗащита:{3}\tМонет:{4}",nickname, PlayerHp, PlayerAtt, PlayerDeff, Money);
                 ResetColor();
-                Console.WriteLine("\n\t{0}Зачистка подземелий\t\t{1}Лазарет\t\t{2}Оплатить штрафы\t\t{3}Уйти", kur[0], kur[1], kur[2],kur[3]);
+                Console.WriteLine("\n{0}Зачистка подземелий\n{1}Лазарет\n{2}Оплатить штрафы\n{3}Уйти", kur[0], kur[1], kur[2],kur[3]);
                 code = Kur(4);
             } while (code == 0);
             if(code == 1)
@@ -640,6 +661,7 @@ namespace Game
                     }
                     Guild();
                 }
+                Guild();
             }
             else
             {
@@ -656,13 +678,17 @@ namespace Game
             do
             {
                 ShowStats();
-                Console.WriteLine("{0}Гильдия\n{1}Торговец\n{2}Выход", kur[0],kur[1] ,kur[2]);
+                Console.WriteLine("{0}Гильдия\n{1}Торговец\n{2}Помощь по игре\n{3}Выход", kur[0],kur[1] ,kur[2], kur[3]);
                 ShowInv();
-                code = Kur(3);
+                code = Kur(4);
             } while (code == 0);
             if (code == 1)
             {
                 Guild();
+            }
+            else if (code == 3)
+            {
+                Help();
             }
             else if (code == 2)
             {
@@ -705,8 +731,17 @@ namespace Game
                         else
                         {
                             Clear();
+                            if (BattlePow > 1)
+                            {
+                                Console.WriteLine("Поздравляю, ты смог выдержать {0} {1}!\nТы молодец!",BattlePow, BattlePow < 5 ? "Монстра" : "Монстров" );
+                                Thread.Sleep(500);
+                                Console.ReadKey();
+                                RecordBattlePow = BattlePow;
+                                BattlePow = 0;
+                            }
                             if (Fight == 1)
                             {
+                                SetColor("Red");
                                 Report = Rand(1, Convert.ToInt32((EnemyLvl * 1.2 + EnemyHp + EnemyAtt * 1.5) * 0.06));
                                 Console.Write("За побег начисляется штраф и при следующей награде гильдия их будет взыскать!\nТвой общий штраф:{0}\n>Вернуться домой", Report);
                                 Console.ReadKey();
@@ -822,6 +857,8 @@ namespace Game
                 Money = Convert.ToInt32(load[i+3]);
                 nickname = load[i+4];
                 GlobalTime = Convert.ToDouble(load[i + 5]);
+                RecordBattlePow = Convert.ToInt32(load[i + 6]);
+                Report = Convert.ToInt32(load[i + 7]);
 
                
 
@@ -848,6 +885,8 @@ namespace Game
             SaveInt[i + 3] = Convert.ToString(Money);
             SaveInt[i + 4] = Convert.ToString(nickname);
             SaveInt[i + 5] = Convert.ToString(GlobalTime);
+            SaveInt[i + 6] = Convert.ToString(Report);
+            SaveInt[i + 7] = Convert.ToString(RecordBattlePow);
             File.WriteAllLines(PathToSave + "\\save.ini", SaveInt);
         }
         static void Time(object args)
@@ -868,8 +907,6 @@ namespace Game
             Console.Title = "Legend of Hero";
             ResetColor();
             Start();
-            InvBaff();
-            ShowStats();
             Menu();
         }
     }
